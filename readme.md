@@ -2,4 +2,6 @@
 
 Simple Brainfuck interpreter in Python3.
 
-Requires `numpy`.
+Requires `numpy` and optionally `cython`.
+
+Uses memoisation for `[]` loops in both versions.
