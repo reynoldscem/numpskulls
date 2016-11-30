@@ -1,5 +1,5 @@
 'Simple Brainfuck interpreter.'
-from readchar import readchar
+from __future__ import print_function
 import numpy as np
 import argparse
 import sys
@@ -7,6 +7,12 @@ import os
 
 INSTRUCTION_SET = '+-<>,.[]'
 TAPE_SIZE = 30000
+
+# Memoize [] pairs
+
+USE_MEMO = True
+start_to_end = {}
+end_to_start = {}
 
 
 def build_parser():
@@ -72,30 +78,38 @@ def print_out(program, program_counter, data, data_pointer):
 
 def loop_start(program, program_counter, data, data_pointer):
     if data[data_pointer] == 0:
-        curr_pos = program_counter
-        open_brackets = 1
-        while open_brackets > 0:
-            curr_pos += 1
-            if program[curr_pos] == '[':
-                open_brackets += 1
-            elif program[curr_pos] == ']':
-                open_brackets -= 1
-        program_counter = curr_pos
+        if USE_MEMO and program_counter in start_to_end.keys():
+            program_counter = start_to_end[program_counter]
+        else:
+            curr_pos = program_counter
+            open_brackets = 1
+            while open_brackets > 0:
+                curr_pos += 1
+                if program[curr_pos] == '[':
+                    open_brackets += 1
+                elif program[curr_pos] == ']':
+                    open_brackets -= 1
+            start_to_end[program_counter] = curr_pos
+            program_counter = curr_pos
     program_counter += 1
     return program, program_counter, data, data_pointer
 
 
 def loop_end(program, program_counter, data, data_pointer):
     if data[data_pointer] != 0:
-        curr_pos = program_counter - 1
-        open_brackets = 1
-        while open_brackets > 0:
-            curr_pos -= 1
-            if program[curr_pos] == '[':
-                open_brackets -= 1
-            elif program[curr_pos] == ']':
-                open_brackets += 1
-        program_counter = curr_pos
+        if USE_MEMO and program_counter in end_to_start.keys():
+            program_counter = end_to_start[program_counter]
+        else:
+            curr_pos = program_counter - 1
+            open_brackets = 1
+            while open_brackets > 0:
+                curr_pos -= 1
+                if program[curr_pos] == '[':
+                    open_brackets -= 1
+                elif program[curr_pos] == ']':
+                    open_brackets += 1
+            end_to_start[program_counter] = curr_pos
+            program_counter = curr_pos
     else:
         program_counter += 1
     return program, program_counter, data, data_pointer
