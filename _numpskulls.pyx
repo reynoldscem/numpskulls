@@ -14,18 +14,6 @@ INSTRUCTION_SET = '+-<>,.[]'
 cdef np.int TAPE_SIZE = 30000
 
 
-# def build_parser():
-#     parser = argparse.ArgumentParser(description=__doc__)
-# 
-#     parser.add_argument(
-#         help='Name of program to run.',
-#         type=str,
-#         dest='filename'
-#     )
-# 
-#     return parser
-
-
 def load_program(bf_filename):
     with open(bf_filename) as fd:
         program = fd.read()
@@ -51,7 +39,12 @@ def execute(program):
     cdef int open_bracketopen_brackets = 0
     cdef np.ndarray data = np.zeros(TAPE_SIZE, dtype=DTYPE)
 
-    while program_counter < len(program):
+    cdef int program_len = len(program)
+
+    cdef np.ndarray start_to_end = np.ones(program_len, dtype=DTYPE) * -1
+    cdef np.ndarray end_to_start = np.ones(program_len, dtype=DTYPE) * -1
+
+    while program_counter < program_len:
         if program[program_counter] == '+':
             data[data_pointer] += 1
             program_counter += 1
@@ -72,26 +65,34 @@ def execute(program):
             program_counter += 1
         elif program[program_counter] == '[':
             if data[data_pointer] == 0:
-                curr_pos = program_counter
-                open_brackets = 1
-                while open_brackets > 0:
-                    curr_pos += 1
-                    if program[curr_pos] == '[':
-                        open_brackets += 1
-                    elif program[curr_pos] == ']':
-                        open_brackets -= 1
-                program_counter = curr_pos
+                if start_to_end[program_counter] != -1:
+                    program_counter = start_to_end[program_counter]
+                else:
+                    curr_pos = program_counter
+                    open_brackets = 1
+                    while open_brackets > 0:
+                        curr_pos += 1
+                        if program[curr_pos] == '[':
+                            open_brackets += 1
+                        elif program[curr_pos] == ']':
+                            open_brackets -= 1
+                    start_to_end[program_counter] = curr_pos
+                    program_counter = curr_pos
             program_counter += 1
         elif program[program_counter] == ']':
             if data[data_pointer] != 0:
-                curr_pos = program_counter - 1
-                open_brackets = 1
-                while open_brackets > 0:
-                    curr_pos -= 1
-                    if program[curr_pos] == '[':
-                        open_brackets -= 1
-                    elif program[curr_pos] == ']':
-                        open_brackets += 1
-                program_counter = curr_pos
+                if end_to_start[program_counter] != -1:
+                    program_counter = end_to_start[program_counter]
+                else:
+                    curr_pos = program_counter - 1
+                    open_brackets = 1
+                    while open_brackets > 0:
+                        curr_pos -= 1
+                        if program[curr_pos] == '[':
+                            open_brackets -= 1
+                        elif program[curr_pos] == ']':
+                            open_brackets += 1
+                    end_to_start[program_counter] = curr_pos
+                    program_counter = curr_pos
             else:
                 program_counter += 1
