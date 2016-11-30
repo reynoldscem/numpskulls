@@ -48,6 +48,7 @@ def execute(program):
     cdef int program_counter = 0
     cdef int data_pointer = 0
     cdef int curr_pus = 0
+    cdef int open_bracketopen_brackets = 0
     cdef np.ndarray data = np.zeros(TAPE_SIZE, dtype=DTYPE)
 
     while program_counter < len(program):
